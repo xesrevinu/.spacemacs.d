@@ -42,8 +42,9 @@
     company-lsp
     flycheck
     nyan-mode
+    helm-mode
     prettier-js
-    nyamoden
+    nyan-mode
     exec-path-from-shell)
   "The list of Lisp packages required by the base layer.
 
@@ -99,26 +100,48 @@ Each entry is either:
            lsp-print-io nil
            lsp-eldoc-render-all nil
            lsp-highlight-symbol-at-point nil)
-    (add-hook 'js2-mode-hook #'lsp-mode)))
+    (add-hook 'js2-mode-hook #'lsp-mode)
+    (add-hook 'rjsx-mode-hook #'lsp-mode)))
 
 (defun base/post-init-lsp-ui ()
   (use-package lsp-ui
     :defer t
-    :ensure
+    :ensure t
     :config
-    (require 'lsp-imenu)
-    (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
-    (setq-default lsp-ui-sideline-show-symbol nil
+    (setq-default lsp-ui-sideline-enable nil
+                  lsp-ui-sideline-show-symbol t
                   lsp-ui-sideline-ignore-duplicate t
-                  lsp-ui-doc-include-signature nil
                   lsp-ui-doc-header t
                   lsp-ui-doc-border "#444"
-                  lsp-ui-sideline-enable nil)
+                  lsp-ui-doc-include-signature t)
+    (setq lsp-ui-doc-frame-parameters '((left . -1)
+                                        (no-accept-focus . t)
+                                        (no-focus-on-map . t)
+                                        (min-width  . 0)
+                                        (width  . 0)
+                                        (min-height  . 0)
+                                        (height  . 0)
+                                        (internal-border-width . 1)
+                                        (vertical-scroll-bars . nil)
+                                        (horizontal-scroll-bars . nil)
+                                        (right-fringe . 0)
+                                        (left-fringe . 0)
+                                        (menu-bar-lines . 0)
+                                        (tool-bar-lines . 0)
+                                        (line-spacing . 0)
+                                        (unsplittable . t)
+                                        (undecorated . t)
+                                        (top . -1)
+                                        (visibility . nil)
+                                        (mouse-wheel-frame . nil)
+                                        (no-other-frame . t)
+                                        (cursor-type . nil)
+                                        (inhibit-double-buffering . t)
+                                        (drag-internal-border . t)
+                                        (no-special-glyphs . t)
+                                        (desktop-dont-save . t)))
     (set-face-attribute 'lsp-ui-doc-background nil
-                        :background "#F5F5F5")
-    ;; bind key
-    (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
-    (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)))
+                        :background "#F5F5F5")))
 
 (defun base/post-init-lsp-javascript-typescript ()
   (use-package lsp-javascript-typescript
@@ -131,22 +154,19 @@ Each entry is either:
 
 (defun base/post-init-flycheck ()
   (use-package flycheck
-    :defer t
+    :ensure t
     :init (global-flycheck-mode t)
     :config
     (setq-default flycheck-disabled-checkers
                   (append flycheck-disabled-checkers
-                          '()))
+                          '(lsp-ui)))
     ;; customize flycheck temp file prefix
-    (setq-default flycheck-temp-prefix ".flycheck")
+    (setq-default flycheck-temp-prefix ".flycheck"
+                  flycheck-check-syntax-automatically nil)
     ;; disable json-jsonlist checking for json files
-    (setq-default flycheck-disabled-checkers
-                  (append flycheck-disabled-checkers
-                          '(json-jsonlist)))
-    ;; (flycheck-add-mode 'javascript-eslint 'rjsx-mode)
     (flycheck-add-mode 'javascript-eslint 'js2-mode)
+    (flycheck-add-mode 'javascript-eslint 'rjsx-mode)
     (add-hook 'flycheck-mode-hook #'my/use-eslint-from-node-modules)))
-
 
 (defun base/post-init-lsp-python ()
   (use-package lsp-python
@@ -154,8 +174,7 @@ Each entry is either:
     :after lsp-mode
     :ensure t
     :config
-    (add-hook 'python-mode-hook
-              #'lsp-python-enable)))
+    (add-hook 'python-mode-hook #'lsp-python-enable)))
 
 (defun base/post-init-js2-mode ()
   (use-package js2-mode
@@ -163,14 +182,20 @@ Each entry is either:
     :config
     (setq js2-mode-show-parse-errors nil)
     (setq js2-mode-show-strict-warnings nil)
-    (setq-local flycheck-check-syntax-automatically nil)
     (setq-default flycheck-checker 'javascript-eslint)
-    (add-to-list 'flycheck-checkers 'javascript-eslint)))
+    (define-key js2-mode-map (kbd "M-,") #'lsp-ui-peek-jump-backward)
+    (define-key js2-mode-map (kbd "M-?") #'lsp-ui-peek-find-references)
+    (define-key js2-mode-map (kbd "M-.") #'lsp-ui-peek-find-definitions)))
 
 (defun base/init-rjsx-mode ()
   (use-package rjsx-mode
-    :defer t
-    :ensure t))
+    :ensure t
+    :config
+    (setq-default flycheck-checker 'javascript-eslint)
+    (add-hook 'rjsx-mode-hook #'flycheck-mode)
+    (define-key rjsx-mode-map (kbd "M-,") #'xref-pop-marker-stack)
+    (define-key rjsx-mode-map (kbd "M-?") #'lsp-ui-peek-find-references)
+    (define-key rjsx-mode-map (kbd "M-.") #'lsp-ui-peek-find-definitions)))
 
 (defun base/post-init-company-lsp ()
   (use-package company-lsp
@@ -198,14 +223,12 @@ Each entry is either:
   (use-package eldoc
     :defer t
     :config
-    (global-eldoc-mode)))
+    (global-eldoc-mode -1)))
 
 (defun base/post-init-yasnippet ()
   (use-package yasnippet
     :defer t
     :config
-    ;; (spacemacs|diminish yas-minor-mode "yas" "yas")
-    (push 'yas-installed-snippets-dir yas-snippet-dirs)
     (setq yas-snippet-dirs '("~/.emacs.d/snippets"
                              "~/.spacemacs.d/snippets"))
     (add-hook 'prog-mode-hook #'yas-minor-mode)
@@ -214,9 +237,34 @@ Each entry is either:
 
 (defun base/init-nyan-mode ()
   (use-package nyan-mode
-    :ensure t
+    :ensure
+    :config
+    (nyan-mode t)))
+
+(defun base/init-helm-mode ()
+  (use-package helm-mode
     :defer t
-    :config (nyan-mode t)))
+    :config
+    (global-set-key (kbd "M-s i") 'helm-imenu)))
+
+(defun base/init-prettier-js ()
+  (use-package prettier-js
+    :ensure t
+    :config
+    (setq prettier-js-command "prettier-eslint")
+    (spacemacs|diminish prettier-js-mode "⚡" "⚡")
+    (add-hook 'scss-mode-hook #'(lambda ()
+                                  (enable-minor-mode
+                                   '("\\.scss\\'" . prettier-js-mode))))
+    (add-hook 'css-mode-hook #'(lambda ()
+                                 (enable-minor-mode
+                                  '("\\.css\\'" . prettier-js-mode))))
+    (add-hook 'js2-mode-hook #'(lambda ()
+                                 (enable-minor-mode
+                                  '("\\.jsx?\\'" . prettier-js-mode))))
+    (add-hook 'json-mode-hook #'(lambda ()
+                                  (enable-minor-mode
+                                   '("\\.json\\'" . prettier-js-mode))))))
 
 (defun base/post-init-editorconfig ()
   (use-package editorconfig
@@ -226,3 +274,4 @@ Each entry is either:
     (editorconfig-mode 1)))
 
 ;;; packages.el ends here
+

@@ -1,0 +1,9 @@
+.spacemacs.env
+
+.env
+
+.DS_Store
+
+*.#
+
+*#
