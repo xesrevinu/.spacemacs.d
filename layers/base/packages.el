@@ -38,11 +38,12 @@
     lsp-javascript-typescript
     editorconfig
     yasnippet
+    all-the-icons
+    smartparens
     company
     company-lsp
     flycheck
     nyan-mode
-    helm-mode
     prettier-js
     nyan-mode
     exec-path-from-shell)
@@ -83,6 +84,38 @@ Each entry is either:
     (when (and eslint (file-executable-p eslint))
       (setq-local flycheck-javascript-eslint-executable eslint))))
 
+(defun base/post-init-smartparens ()
+  (use-package smartparens
+    :defer t
+    :diminish ("" "")
+    :config
+    (add-hook 'js2-mode-hook #'smartparens-strict-mode)
+    (add-hook 'rjsx-mode-hook #'smartparens-strict-mode)))
+
+(defun base/init-all-the-icons ()
+  (use-package all-the-icons
+    :defer t
+    :config
+    (setq all-the-icons-scale-factor 0.95)))
+
+(defun base/post-init-company ()
+  (use-package company
+    :defer t
+    :diminish ("" "")
+    :init (global-company-mode)
+    :config
+    (setq company-idle-delay 0.2
+          company-tooltip-align-annotations t
+          company-selection-wrap-around t
+          completion-ignore-case t
+          company-tooltip-limit 10
+          company-minimum-prefix-length 1
+          company-tooltip-margin 1)
+    (global-set-key (kbd "C-M-i") 'company-complete)
+    (define-key company-active-map (kbd "C-s") 'company-filter-candidates)
+    (define-key company-active-map [tab] 'company-complete-selection)))
+
+
 (defun base/init-exec-path-from-shell ()
   (use-package exec-path-from-shell
     :ensure t
@@ -101,6 +134,7 @@ Each entry is either:
            lsp-eldoc-render-all nil
            lsp-highlight-symbol-at-point nil)
     (add-hook 'js2-mode-hook #'lsp-mode)
+
     (add-hook 'rjsx-mode-hook #'lsp-mode)))
 
 (defun base/post-init-lsp-ui ()
@@ -154,6 +188,7 @@ Each entry is either:
 
 (defun base/post-init-flycheck ()
   (use-package flycheck
+    :diminish ("c" "c")
     :ensure t
     :init (global-flycheck-mode t)
     :config
@@ -182,6 +217,7 @@ Each entry is either:
     :config
     (setq js2-mode-show-parse-errors nil)
     (setq js2-mode-show-strict-warnings nil)
+    ;; (add-hook js2-mode-hook (lambda() (setq-default company-mode -1)))
     (setq-default flycheck-checker 'javascript-eslint)
     (define-key js2-mode-map (kbd "M-,") #'lsp-ui-peek-jump-backward)
     (define-key js2-mode-map (kbd "M-?") #'lsp-ui-peek-find-references)
@@ -203,22 +239,6 @@ Each entry is either:
     :config
     (push 'company-lsp company-backends)))
 
-(defun base/post-init-company ()
-  (use-package company
-    :defer t
-    :init (global-company-mode)
-    :config
-    (setq company-idle-delay 0.2
-          company-tooltip-align-annotations t
-          company-selection-wrap-around t
-          completion-ignore-case t
-          company-tooltip-limit 10
-          company-minimum-prefix-length 1
-          company-tooltip-margin 1)
-    (global-set-key (kbd "C-M-i") 'company-complete)
-    (define-key company-active-map (kbd "C-s") 'company-filter-candidates)
-    (define-key company-active-map [tab] 'company-complete-selection)))
-
 (defun base/post-init-eldoc ()
   (use-package eldoc
     :defer t
@@ -227,25 +247,21 @@ Each entry is either:
 
 (defun base/post-init-yasnippet ()
   (use-package yasnippet
+    :diminish ("" "")
     :defer t
     :config
     (setq yas-snippet-dirs '("~/.emacs.d/snippets"
                              "~/.spacemacs.d/snippets"))
     (add-hook 'prog-mode-hook #'yas-minor-mode)
     ;; show yasnippet panel
-    (global-set-key (kbd "C-M-p") 'company-yasnippet)))
+    ;; (global-set-key (kbd "C-M-p") 'company-yasnippet)
+    ))
 
 (defun base/init-nyan-mode ()
   (use-package nyan-mode
     :ensure
     :config
     (nyan-mode t)))
-
-(defun base/init-helm-mode ()
-  (use-package helm-mode
-    :defer t
-    :config
-    (global-set-key (kbd "M-s i") 'helm-imenu)))
 
 (defun base/init-prettier-js ()
   (use-package prettier-js

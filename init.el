@@ -37,8 +37,9 @@ values."
      ;; <M-m f e R> (Emacs style) to install them.
      ;; ----------------------------------------------------------------
      helm
-     auto-completion
+     (auto-completion :variables auto-complete-enable-help-tooltip t)
      better-defaults
+     (ibuffer :variables ibuffer-group-buffers-by 'projects)
      emacs-lisp
      lsp
      (python :variables python-backend 'lsp)
@@ -52,7 +53,8 @@ values."
      syntax-checking
      html
      (javascript :packages (not coffe-mode web-beautify livid-mode tern) :variables javascript-backend 'lsp)
-     version-control
+     (version-control :variables
+                      version-control-diff-side 'left)
      base
      )
    ;; List of additional packages that will be installed without being
@@ -372,14 +374,14 @@ before packages are loaded. If you are unsure, you should try in setting them in
                                             :width normal
                                             :powerline-scale 1))
   ;; Keybonds
-  (global-set-key [(hyper a)] 'mark-whole-buffer)
-  (global-set-key [(hyper v)] 'yank)
-  (global-set-key [(hyper c)] 'kill-ring-save)
-  (global-set-key [(hyper s)] 'save-buffer)
-  (global-set-key [(hyper l)] 'goto-line)
-  (global-set-key [(hyper w)]
-                  (lambda () (interactive) (delete-window)))
-  (global-set-key [(hyper z)] 'undo)
+  ;; (global-set-key [(hyper a)] 'mark-whole-buffer)
+  ;; (global-set-key [(hyper v)] 'yank)
+  ;; (global-set-key [(hyper c)] 'kill-ring-save)
+  ;; (global-set-key [(hyper s)] 'save-buffer)
+  ;; (global-set-key [(hyper l)] 'goto-line)
+  ;; (global-set-key [(hyper w)]
+  ;;                 (lambda () (interactive) (delete-window)))
+  ;; (global-set-key [(hyper z)] 'undo)
 
   ;; mac switch meta key
   (defun mac-switch-meta nil
@@ -407,7 +409,7 @@ before packages are loaded. If you are unsure, you should try in setting them in
 
   (setq ns-right-command-modifier 'none)   ;; original value is 'left'
   (setq ns-right-alternate-modifier 'none)
-  
+
   (setq exec-path-from-shell-arguments '("-l"))
 )
 
@@ -426,6 +428,8 @@ This is the place where most of your configurations should be done. Unless it is
 explicitly specified that a variable should be set before a p
 ackage is loaded,
 you should place your code here."
+  ;; (add-hook 'after-init-hook '(global-company-mode -1))
+
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize))
 
@@ -461,16 +465,18 @@ you should place your code here."
   (set-face-background 'vertical-border "#FAFAFA")
   (set-face-foreground 'vertical-border (face-background 'vertical-border))
 
+
+
   ;; highlight current line
   (global-hl-line-mode 1)
-  (set-face-background 'hl-line "#f7f7f7")
+  ;; (set-face-background 'hl-line "#f7f7f7")
   (set-face-foreground 'highlight nil)
 
-  (spacemacs|diminish helm-mode "h" "h")
-  (spacemacs|diminish holy-mode "e" "e")
+  (spacemacs|diminish holy-mode "" "")
+  (spacemacs|diminish which-key-mode "" "")
 
   ;; neotree
-  ;; (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+  (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
   (setq neo-autorefresh t)
   (setq neo-smart-open t)
   (setq neo-force-change-root t)
@@ -515,3 +521,6 @@ This function is called at the very end of Spacemacs initialization."
  ;; If there is more than one, they won't work right.
  )
 )
+
+
+
